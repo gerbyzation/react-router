@@ -6547,6 +6547,35 @@ describe("a router", () => {
       });
     });
 
+    it("properly handles same-origin absolute URLs with X-Remix-Reload-Document header", async () => {
+      let url = "http://localhost/login";
+
+      // This is gross, don't blame me, blame SO :)
+      // https://stackoverflow.com/a/60697570
+      let oldLocation = window.location;
+      const location = new URL(window.location.href) as unknown as Location;
+      location.assign = jest.fn();
+      location.replace = jest.fn();
+      delete (window as any).location;
+      window.location = location as unknown as Location;
+
+      let t = setup({ routes: REDIRECT_ROUTES });
+
+      let A = await t.navigate("/parent/child", {
+        formMethod: "post",
+        formData: createFormData({}),
+        replace: true,
+      });
+
+      await A.actions.child.redirectReturn(url, undefined, {
+        "X-Remix-Reload-Document": "true",
+      });
+      expect(window.location.replace).toHaveBeenCalledWith("/login");
+      expect(window.location.assign).not.toHaveBeenCalled();
+
+      window.location = oldLocation;
+    });
+
     it("properly handles same-origin absolute URLs when using a basename", async () => {
       let t = setup({ routes: REDIRECT_ROUTES, basename: "/base" });
 

@@ -2081,22 +2081,30 @@ export function createRouter(init: RouterInit): Router {
       redirectLocation,
       "Expected a location on the redirect navigation"
     );
-    // Check if this an absolute external redirect that goes to a new origin
-    if (
-      ABSOLUTE_URL_REGEX.test(redirect.location) &&
-      isBrowser &&
-      typeof window?.location !== "undefined"
-    ) {
-      let url = init.history.createURL(redirect.location);
-      let isDifferentBasename = stripBasename(url.pathname, basename) == null;
 
-      if (window.location.origin !== url.origin || isDifferentBasename) {
+    if (isBrowser && typeof window?.location !== "undefined") {
+      if (redirect.reloadDocument) {
         if (replace) {
           window.location.replace(redirect.location);
         } else {
           window.location.assign(redirect.location);
         }
         return;
+      }
+
+      // Check if this an absolute external redirect that goes to a new origin
+      if (ABSOLUTE_URL_REGEX.test(redirect.location)) {
+        let url = init.history.createURL(redirect.location);
+        let isDifferentBasename = stripBasename(url.pathname, basename) == null;
+
+        if (window.location.origin !== url.origin || isDifferentBasename) {
+          if (replace) {
+            window.location.replace(redirect.location);
+          } else {
+            window.location.assign(redirect.location);
+          }
+          return;
+        }
       }
     }
 
@@ -3603,6 +3611,7 @@ async function callLoaderOrAction(
         status,
         location,
         revalidate: result.headers.get("X-Remix-Revalidate") !== null,
+        reloadDocument: result.headers.get("X-Remix-Reload-Document") !== null,
       };
     }
 
