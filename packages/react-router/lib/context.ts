@@ -96,6 +96,7 @@ export interface NavigateOptions {
   relative?: RelativeRoutingType;
   unstable_flushSync?: boolean;
   unstable_viewTransition?: boolean;
+  reloadDocument?: boolean;
 }
 
 /**

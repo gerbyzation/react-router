@@ -446,6 +446,7 @@ type BaseNavigateOptions = BaseNavigateOrFetchOptions & {
   state?: any;
   fromRouteId?: string;
   unstable_viewTransition?: boolean;
+  reloadDocument?: boolean;
 };
 
 // Only allowed for submission navigations
@@ -1320,6 +1321,7 @@ export function createRouter(init: RouterInit): Router {
       replace: opts && opts.replace,
       enableViewTransition: opts && opts.unstable_viewTransition,
       flushSync,
+      reloadDocument: opts?.reloadDocument,
     });
   }
 
@@ -1372,6 +1374,7 @@ export function createRouter(init: RouterInit): Router {
       replace?: boolean;
       enableViewTransition?: boolean;
       flushSync?: boolean;
+      reloadDocument?: boolean;
     }
   ): Promise<void> {
     // Abort any in-progress navigations and start a new one. Unset any ongoing
@@ -1382,6 +1385,19 @@ export function createRouter(init: RouterInit): Router {
     pendingAction = historyAction;
     isUninterruptedRevalidation =
       (opts && opts.startUninterruptedRevalidation) === true;
+
+    if (opts?.reloadDocument) {
+      if (opts.replace) {
+        window.location.replace(
+          location.pathname + location.search + location.hash
+        );
+      } else {
+        window.location.assign(
+          location.pathname + location.search + location.hash
+        );
+      }
+      return;
+    }
 
     // Save the current scroll position every time we start a new navigation,
     // and track whether we should reset scroll on completion
